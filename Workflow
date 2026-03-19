@@ -1,0 +1,139 @@
+# 🚀 GitHub Actions Workflow for `Sazwan96/material-design-icons`
+
+Based on your request, I assume you'd like a **CI/CD workflow** for the repository `Sazwan96/material-design-icons`. This could be a fork or custom version of Google's Material Icons. Below is a generic GitHub Actions workflow that you can adapt to your needs. It includes steps for:
+
+- Checking out the code
+- Installing dependencies (if any, e.g., for building icon fonts or optimizing SVGs)
+- Running tests (if you have any)
+- Building the icons (e.g., generating font files, copying assets)
+- Publishing artifacts or deploying to a package registry (npm, GitHub Packages) or GitHub Pages
+
+If your repository simply hosts static icon files (SVG, PNG, etc.) and doesn't require building, you can simplify the workflow.
+
+---
+
+## 📁 `.github/workflows/icons-ci.yml`
+
+```yaml
+name: Material Icons CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js (if you use npm/yarn)
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'   # or 'yarn'
+
+    - name: Install dependencies (if needed)
+      run: npm ci       # or yarn install --frozen-lockfile
+
+    - name: Lint / Validate icons (customize)
+      run: |
+        # Example: check if all SVGs are valid
+        # You could use a tool like svglint
+        npx svglint "**/*.svg" --config .svglintrc.js || echo "Linting skipped"
+
+    - name: Build icons (if you have a build script)
+      run: |
+        # Example: generate font from SVGs using icon-font-generator
+        # npm run build-icons
+        echo "No build step defined – skipping"
+
+    - name: Run tests (if any)
+      run: |
+        # Example: test that all expected icons exist
+        # npm test
+        echo "No tests defined – skipping"
+
+    - name: Upload built artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: material-icons-dist
+        path: |
+          dist/
+          fonts/
+          # adjust to your output folders
+```
+
+---
+
+## 🚢 Publishing to npm or GitHub Packages (Optional)
+
+If you want to automatically publish the package when a new tag is pushed, add a **publish** job:
+
+```yaml
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')   # only on version tags
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        registry-url: 'https://registry.npmjs.org/'
+        # for GitHub Packages, use 'https://npm.pkg.github.com/'
+
+    - run: npm ci
+    - run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}   # or GITHUB_TOKEN for GitHub Packages
+```
+
+---
+
+## 📄 Deploying to GitHub Pages (if you have a demo site)
+
+If your repository contains a demo site (e.g., in a `docs/` folder), you can deploy to GitHub Pages:
+
+```yaml
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build demo site (if needed)
+      run: |
+        # e.g., if you have a Jekyll site in /docs
+        # or a static site generator
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs   # or ./dist, ./public, etc.
+```
+
+---
+
+## 🛠️ Customizing for Your Repository
+
+- If your repository **only contains raw icon files** (no build step), remove the build and dependency steps.
+- If you use **other tools** (Python, Ruby, etc.), replace the setup step accordingly.
+- Adjust the `path` in the upload-artifact step to match your actual output folders.
+
+---
+
+## ❓ Need More Specifics?
+
+If this workflow doesn't match what you had in mind, please provide more details about:
+- What kind of project `Sazwan96/material-design-icons` is (Node package, static assets, font generator, etc.)
+- What you want the CI to do (test, build, publish, deploy)
+- Any specific tools or scripts you already use
+
+I'll be happy to refine the workflow for you! 😊
